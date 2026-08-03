@@ -16,6 +16,7 @@ Config.SoundCooldown = 30
 -- Future resources may override imageBase or provide complete image URLs per entry.
 Config.InventoryImageResource = 'node7-inventory'
 Config.InventoryImagePath = 'html/images'
+Config.InventoryImageExtensions = { 'png', 'webp', 'jpg', 'jpeg' }
 
 Config.Permissions = {
     Test = 'node7.ui.test',

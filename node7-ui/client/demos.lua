@@ -95,6 +95,46 @@ local function dashboardScreen(id, label, description)
     }
 end
 
+local function commerceDashboardScreen()
+    return {
+        id = 'commerce_dashboard',
+        label = 'Commerce Dashboard',
+        title = 'Commerce Dashboard',
+        description = 'Complete reusable transaction controls for shops, sell markets, trades, auctions, and black markets.',
+        view = 'dashboard',
+        categories = { { id = 'overview', label = 'Transaction' } },
+        metrics = {
+            { id = 'funds', label = 'Available Funds', value = '$245.00', progress = 72, description = 'Available purchase balance.' },
+            { id = 'stock', label = 'Stock', value = '48', progress = 80, description = 'Available merchant stock.' },
+            { id = 'capacity', label = 'Carry Capacity', value = '36 / 80', progress = 45, description = 'Inventory capacity before purchase.' },
+            { id = 'standing', label = 'Merchant Standing', value = 'Trusted', progress = 88, description = 'Current merchant standing.' }
+        },
+        dashboard = {
+            kicker = 'Commerce Dashboard',
+            title = 'Configure Purchase',
+            description = 'Direct quantity input, presets, payment selection, checkboxes, delivery toggle, and optional notes.',
+            fields = {
+                { id = 'quantity', label = 'Quantity', type = 'quantity', min = 1, max = 99, value = 1, presets = { 1, 5, 10, 25 }, required = true },
+                { id = 'payment', label = 'Payment Account', type = 'select', value = 'cash', options = {
+                    { value = 'cash', label = 'Cash' },
+                    { value = 'bank', label = 'Bank' }
+                } },
+                { id = 'options', label = 'Order Options', type = 'checkboxes', options = {
+                    { value = 'inspect', label = 'Inspect before purchase' },
+                    { value = 'receipt', label = 'Request receipt', checked = true }
+                } },
+                { id = 'delivery', label = 'Direct Delivery', type = 'toggle', value = true, optionLabel = 'Deliver to inventory' },
+                { id = 'note', label = 'Order Note', type = 'text', placeholder = 'Optional merchant note', maxLength = 80 }
+            },
+            summary = { title = 'Trail Revolver', unitPrice = 58.25, quantityField = 'quantity', currency = '$', taxRate = 0.02 },
+            actions = {
+                { id = 'clear', label = 'Clear', validate = false },
+                { id = 'purchase', label = 'Purchase', style = 'primary' }
+            }
+        }
+    }
+end
+
 local function tableScreen(id, label, description)
     return {
         id = id,
@@ -281,15 +321,16 @@ local function universalPayload(startModule)
         },
         cursor = true,
         startModule = startModule or 'commerce',
+        startScreen = (startModule == nil or startModule == 'commerce') and 'commerce_dashboard' or nil,
         modules = {
             {
                 id = 'commerce',
                 label = 'Commerce',
                 screens = {
                     gridScreen('vendor', 'Vendor Catalogue', 'Shop, catalogue, filtering, stock, quantity, item image, and inspection structure.'),
+                    commerceDashboardScreen(),
                     listScreen('buy_sell', 'Buy & Sell', 'Purchase, selling, valuation, stock comparison, and action-row structure.'),
-                    tableScreen('auction', 'Auction House', 'Listing, bid, seller, expiry, category, and pricing structure.'),
-                    dualScreen('trade', 'Player Trade', 'Two-sided item offer, value, state, confirmation, and cancellation structure.')
+                    tableScreen('auction', 'Auction House', 'Listing, bid, seller, expiry, category, and pricing structure.')
                 }
             },
             {

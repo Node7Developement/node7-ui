@@ -10,11 +10,22 @@ local function debugPrint(message)
     end
 end
 
-local function imageBase()
-    return ('https://cfx-nui-%s/%s'):format(
-        Config.InventoryImageResource,
-        Config.InventoryImagePath
-    )
+local function cleanPath(value)
+    local path = tostring(value or ''):gsub('\\', '/'):gsub('^/+', ''):gsub('/+$', '')
+    return path
+end
+
+local function imageBase(resourceName, imagePath)
+    local resource = tostring(resourceName or Config.InventoryImageResource or 'node7-inventory')
+    local path = cleanPath(imagePath or Config.InventoryImagePath or 'html/images')
+    return ('https://cfx-nui-%s/%s'):format(resource, path)
+end
+
+local function imageUrl(itemName, resourceName, imagePath)
+    local name = cleanPath(itemName)
+    if name == '' then return '' end
+    if not name:match('%.%w+$') then name = name .. '.png' end
+    return ('%s/%s'):format(imageBase(resourceName, imagePath), name)
 end
 
 local function sendMessage(action, payload)
@@ -67,7 +78,10 @@ local function normalizePayload(payload)
     normalized.title = normalized.title or 'NODE7 Dominion'
     normalized.subtitle = normalized.subtitle or 'Universal modular interface'
     normalized.cursor = normalized.cursor == nil and Config.DefaultCursor or normalized.cursor == true
-    normalized.imageBase = normalized.imageBase or imageBase()
+    normalized.imageResource = normalized.imageResource or normalized.inventoryImageResource or Config.InventoryImageResource
+    normalized.imagePath = normalized.imagePath or normalized.inventoryImagePath or Config.InventoryImagePath
+    normalized.imageBase = normalized.imageBase or normalized.inventoryImageBase or imageBase(normalized.imageResource, normalized.imagePath)
+    normalized.imageExtensions = normalized.imageExtensions or Config.InventoryImageExtensions
     normalized.maxItems = Config.MaxItemsPerScreen
     normalized.soundEnabled = normalized.soundEnabled == nil and Config.SoundEnabled or normalized.soundEnabled == true
     normalized.soundVolume = tonumber(normalized.soundVolume) or Config.SoundVolume
@@ -142,6 +156,75 @@ local function IsOpen()
     return isOpen
 end
 
+local function OpenCheckout(payload)
+    local source = copyTable(payload)
+
+    if type(source.modules) == 'table' then
+        return Open(source)
+    end
+
+    local checkout = type(source.checkout) == 'table' and source.checkout or source
+    local screenTitle = checkout.title or source.title or 'Commerce Checkout'
+
+    return Open({
+        id = source.id,
+        title = source.shellTitle or source.title or 'NODE7 Commerce',
+        subtitle = source.subtitle or 'Secure transaction checkout',
+        cursor = source.cursor,
+        statusLeft = source.statusLeft,
+        statusRight = source.statusRight,
+        imageResource = source.imageResource,
+        imagePath = source.imagePath,
+        startModule = 'commerce',
+        startScreen = 'checkout',
+        modules = {
+            {
+                id = 'commerce',
+                label = source.moduleLabel or 'Commerce',
+                screens = {
+                    {
+                        id = 'checkout',
+                        label = source.screenLabel or 'Checkout',
+                        title = screenTitle,
+                        description = checkout.description or source.description or 'Select quantity, payment, and confirm the transaction.',
+                        view = 'checkout',
+                        categories = { { id = 'checkout', label = 'Checkout' } },
+                        checkout = checkout
+                    }
+                }
+            }
+        }
+    })
+end
+
+local function UpdateCheckout(payload)
+    if not isOpen then
+        return false
+    end
+
+    return Update({
+        startModule = 'commerce',
+        startScreen = 'checkout',
+        modules = {
+            {
+                id = 'commerce',
+                label = payload.moduleLabel or 'Commerce',
+                screens = {
+                    {
+                        id = 'checkout',
+                        label = payload.screenLabel or 'Checkout',
+                        title = payload.title or 'Commerce Checkout',
+                        description = payload.description or 'Select quantity, payment, and confirm the transaction.',
+                        view = 'checkout',
+                        categories = { { id = 'checkout', label = 'Checkout' } },
+                        checkout = type(payload.checkout) == 'table' and payload.checkout or payload
+                    }
+                }
+            }
+        }
+    })
+end
+
 exports('Open', Open)
 exports('Close', Close)
 exports('Update', Update)
@@ -149,6 +232,12 @@ exports('ShowToast', ShowToast)
 exports('ShowModal', ShowModal)
 exports('PlaySound', PlaySound)
 exports('IsOpen', IsOpen)
+exports('OpenCheckout', OpenCheckout)
+exports('UpdateCheckout', UpdateCheckout)
+exports('GetImageUrl', imageUrl)
+exports('GetInventoryImageUrl', function(itemName)
+    return imageUrl(itemName, Config.InventoryImageResource, Config.InventoryImagePath)
+end)
 
 RegisterNetEvent('node7-ui:client:open', function(payload)
     Open(payload)
@@ -223,6 +312,8 @@ RegisterNUICallback('node7ui_ready', function(_, callback)
         payload = {
             resource = RESOURCE,
             imageBase = imageBase(),
+            imageResource = Config.InventoryImageResource,
+            imagePath = Config.InventoryImagePath,
             soundEnabled = Config.SoundEnabled == true,
             soundVolume = tonumber(Config.SoundVolume) or 0.38,
             soundCooldown = tonumber(Config.SoundCooldown) or 30

@@ -2,7 +2,7 @@ $engine: 3
 $onesync: on
 name: NODE7 UI
 author: NODE7 Development Studios
-version: 1.3.0
+version: 1.4.1
 description: Animated full-screen ESO and Red Dead scene shell with local WAV feedback and standalone notifications.
 
 tasks:

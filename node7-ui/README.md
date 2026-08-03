@@ -4,7 +4,7 @@ Full-screen animated ESO × Red Dead scene shell for NODE7 RedM resources.
 
 `node7-ui` supplies reusable UI structure only. It does not own inventory, money, banking, shops, crafting, housing, jobs, gangs, medical data, records, or framework state. Resources can connect their own data later through the existing generic NODE7 UI API.
 
-## Version 1.3.0
+## Version 1.4.1
 
 - True full-screen overlay shell
 - No dropdown menus
@@ -198,6 +198,17 @@ image = 'https://cfx-nui-another-resource/html/images/custom.png'
 Missing images fall back to a monogram without breaking the layout.
 
 
+For cross-resource loading, `node7-inventory` must expose its image folder in that resource's `fxmanifest.lua`:
+
+```lua
+files {
+    'html/images/*'
+}
+```
+
+`node7-ui` then resolves `item`, `itemName`, `image`, `imageUrl`, `thumbnail`, `imageResource`, and `imagePath` values without copying the inventory images into this resource.
+
+
 ## Local sound feedback
 
 The resource includes these standard PCM WAV names:
@@ -249,3 +260,36 @@ exports['node7-ui']:ShowToast({
 ```
 
 Set `standalone = false` only when a notification must be restricted to the open full-screen UI.
+
+
+## Commerce controls and inventory images
+
+Version 1.4.1 adds a complete Commerce Dashboard control set: quantity steppers, direct numeric entry, presets, text and textarea inputs, select/radio choices, single and grouped checkboxes, toggles, ranges, required-field validation, transaction summaries, and submitted field values.
+
+Inventory artwork is resolved from `node7-inventory/html/images` by default. Entries may provide only `item = 'apple'`, `image = 'apple.png'`, `image = 'html/images/apple.png'`, or an explicit `imageResource`/`imagePath`. The UI tries PNG, WEBP, JPG, and JPEG candidates before showing the monogram fallback.
+
+Client exports:
+
+```lua
+local image = exports['node7-ui']:GetInventoryImageUrl('apple')
+local custom = exports['node7-ui']:GetImageUrl('apple.png', 'node7-inventory', 'html/images')
+```
+
+The source resource must expose its image files in its own `fxmanifest.lua`, for example `files { 'html/images/*.png' }`.
+
+## Commerce checkout view
+
+Use `view = 'checkout'` with a `checkout` table for first-class shop checkout support. The view includes direct whole-number quantity input, ± step controls, bulk controls, presets/MAX, selectable payment methods, live totals, optional confirmations/notes, and a final confirmation action.
+
+Exports:
+
+```lua
+exports['node7-ui']:OpenCheckout(payload)
+exports['node7-ui']:UpdateCheckout(payload)
+```
+
+Checkout actions are returned through `node7-ui:client:action` in `data.checkout`, including `itemId`, `quantity`, `paymentMethod`, `subtotal`, `tax`, `fee`, `discount`, `total`, confirmations, and note.
+
+## Optimized package
+
+The runtime resource is kept below 100 files. The optional physical card artwork is stored as one archive at `extras/node7-card-assets.zip`; it is not loaded by RedM and can be extracted separately for editing. Checkout, quantity controls, exports, and `node7-inventory/html/images` resolution remain part of the runtime UI.
