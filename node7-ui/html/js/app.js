@@ -914,13 +914,30 @@
     const currency = text(explicit.currency, currencyMatch ? currencyMatch[0] : '$');
 
     const paymentMethods = asArray(explicit.paymentMethods || explicit.payments);
-    const fallbackPayment = {
-      id: text(state.payload?.statusRight?.label, 'cash').toLowerCase().replace(/\s+/g, '_'),
-      label: text(state.payload?.statusRight?.label, 'Cash'),
-      balance: text(state.payload?.statusRight?.value, 'Available'),
-      description: 'Available payment account',
-      selected: true
-    };
+    const money = asObject(state.payload?.money);
+    const statusRight = asObject(state.payload?.statusRight);
+    const statusKey = text(statusRight.label, '').toLowerCase();
+    const cashBalance = explicit.cashBalance ?? state.payload?.cashBalance ?? money.cash
+      ?? (statusKey.includes('cash') ? statusRight.value : 'Available');
+    const bankBalance = explicit.bankBalance ?? state.payload?.bankBalance ?? money.bank
+      ?? (statusKey.includes('bank') ? statusRight.value : 'Available');
+    const fallbackPayments = [
+      {
+        id: 'cash',
+        label: 'Cash',
+        icon: '$',
+        balance: text(cashBalance, 'Available'),
+        description: 'Pay directly from carried cash',
+        selected: true
+      },
+      {
+        id: 'bank',
+        label: 'Bank',
+        icon: 'B',
+        balance: text(bankBalance, 'Available'),
+        description: 'Charge the connected bank account'
+      }
+    ];
 
     const explicitActions = asArray(explicit.actions);
     const legacyOrderActions = asArray(legacyOrder?.actions);
@@ -953,7 +970,7 @@
       taxRate: numberFromValue(explicit.taxRate ?? explicit.summary?.taxRate, 0),
       fee: numberFromValue(explicit.fee ?? explicit.summary?.fee, 0),
       discount: numberFromValue(explicit.discount ?? explicit.summary?.discount, 0),
-      paymentMethods: paymentMethods.length ? paymentMethods : [fallbackPayment],
+      paymentMethods: paymentMethods.length ? paymentMethods : fallbackPayments,
       confirmations: asArray(explicit.confirmations || explicit.checkboxes),
       notes: asObject(explicit.notes),
       purchaseAction,
@@ -1035,7 +1052,8 @@
       const selected = source.selected === true || (!selectedPayment && index === 0);
       if (selected) selectedPayment = id;
       button.setAttribute('aria-selected', selected ? 'true' : 'false');
-      button.innerHTML = `<span class="n7ui-payment-check"></span><span class="n7ui-payment-copy"><strong>${text(source.label, id)}</strong><small>${text(source.description, 'Payment account')}</small></span><span class="n7ui-payment-balance"><small>Available</small><strong>${text(source.balance || source.valueLabel, 'Ready')}</strong></span>`;
+      const paymentIcon = text(source.icon, id.toLowerCase().includes('bank') ? 'B' : '$');
+      button.innerHTML = `<span class="n7ui-payment-icon" aria-hidden="true">${paymentIcon}</span><span class="n7ui-payment-check"></span><span class="n7ui-payment-copy"><strong>${text(source.label, id)}</strong><small>${text(source.description, 'Payment account')}</small></span><span class="n7ui-payment-balance"><small>Available</small><strong>${text(source.balance || source.valueLabel, 'Ready')}</strong></span>`;
       button.addEventListener('click', () => {
         if (button.disabled) return;
         selectedPayment = id;
@@ -1391,18 +1409,29 @@
       wrapper.appendChild(list);
       emitFieldChange(wrapper, wrapper._n7GetValue());
     } else if (type === 'select') {
-      const select = document.createElement('select');
-      asArray(source.options).forEach(option => {
-        const node = document.createElement('option');
-        node.value = text(option.value, option.label);
-        node.textContent = text(option.label, option.value);
-        node.selected = String(source.value) === node.value || option.selected === true;
-        select.appendChild(node);
+      // RedM NUI handles native HTML dropdowns inconsistently. Keep legacy
+      // `type = "select"` payload compatibility, but always render button cards.
+      const choices = document.createElement('div');
+      choices.className = 'n7ui-choice-grid n7ui-choice-grid-select';
+      const options = asArray(source.options);
+      options.slice(0, 8).forEach((option, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'n7ui-form-choice n7ui-form-choice-card';
+        button.dataset.value = text(option.value, option.label);
+        const selected = String(source.value) === button.dataset.value || option.selected === true || (!text(source.value, '') && index === 0);
+        button.setAttribute('aria-selected', selected ? 'true' : 'false');
+        button.innerHTML = `<span class="n7ui-choice-indicator"></span><span class="n7ui-choice-copy"><strong>${text(option.label, option.value)}</strong><small>${text(option.description || option.subtitle, 'Select this option')}</small></span>${option.valueLabel || option.balance ? `<span class="n7ui-choice-value">${text(option.valueLabel || option.balance, '')}</span>` : ''}`;
+        button.addEventListener('click', () => {
+          choices.querySelectorAll('.n7ui-form-choice').forEach(entry => entry.setAttribute('aria-selected', entry === button ? 'true' : 'false'));
+          emitFieldChange(wrapper, button.dataset.value);
+          playSound('select');
+        });
+        choices.appendChild(button);
       });
-      select.addEventListener('change', () => emitFieldChange(wrapper, select.value));
-      wrapper.appendChild(select);
-      setReader(() => select.value);
-      emitFieldChange(wrapper, select.value);
+      wrapper.appendChild(choices);
+      setReader(() => choices.querySelector('[aria-selected="true"]')?.dataset.value || '');
+      emitFieldChange(wrapper, wrapper._n7GetValue());
     } else if (type === 'choice' || type === 'radio') {
       const choices = document.createElement('div');
       choices.className = 'n7ui-choice-grid';

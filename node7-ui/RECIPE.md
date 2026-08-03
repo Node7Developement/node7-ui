@@ -1,6 +1,6 @@
 # NODE7 UI Recipe
 
-Package version: **1.4.1**
+Package version: **1.4.3**
 
 The included txAdmin recipe installs `node7-ui`, writes `node7-ui.cfg`, appends it to `server.cfg`, loads ACE permissions, and ensures the resource.
 

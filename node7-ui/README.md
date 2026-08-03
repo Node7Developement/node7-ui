@@ -4,12 +4,12 @@ Full-screen animated ESO × Red Dead scene shell for NODE7 RedM resources.
 
 `node7-ui` supplies reusable UI structure only. It does not own inventory, money, banking, shops, crafting, housing, jobs, gangs, medical data, records, or framework state. Resources can connect their own data later through the existing generic NODE7 UI API.
 
-## Version 1.4.1
+## Version 1.4.3
 
 - True full-screen overlay shell
-- No dropdown menus
+- No native dropdown menus; legacy `select` payloads render as RedM-safe choice cards
 - No traditional vertical menu lists
-- No scrollbars
+- Styled scrollbars appear only inside panels that genuinely overflow
 - Compass-based realm navigation
 - Four visible chapter scenes per realm
 - Category constellations with page rotation
@@ -170,7 +170,7 @@ dual
 components
 ```
 
-Every data-heavy view uses fixed visible capacity and page rotation instead of scrollbars.
+Data-heavy catalogue views use fixed visible capacity and page rotation. Checkout, forms, payment methods, and modal fields use a styled scrollbar only when their content exceeds the available panel height.
 
 ## Image support
 
@@ -264,7 +264,7 @@ Set `standalone = false` only when a notification must be restricted to the open
 
 ## Commerce controls and inventory images
 
-Version 1.4.1 adds a complete Commerce Dashboard control set: quantity steppers, direct numeric entry, presets, text and textarea inputs, select/radio choices, single and grouped checkboxes, toggles, ranges, required-field validation, transaction summaries, and submitted field values.
+Version 1.4.3 provides quantity steppers, direct numeric entry, presets, text and textarea inputs, button-card choices, single and grouped checkboxes, toggles, ranges, required-field validation, transaction summaries, and submitted field values. Native HTML dropdowns are never created; older `type = 'select'` payloads are converted automatically into clickable choice cards.
 
 Inventory artwork is resolved from `node7-inventory/html/images` by default. Entries may provide only `item = 'apple'`, `image = 'apple.png'`, `image = 'html/images/apple.png'`, or an explicit `imageResource`/`imagePath`. The UI tries PNG, WEBP, JPG, and JPEG candidates before showing the monogram fallback.
 
@@ -293,3 +293,10 @@ Checkout actions are returned through `node7-ui:client:action` in `data.checkout
 ## Optimized package
 
 The runtime resource is kept below 100 files. The optional physical card artwork is stored as one archive at `extras/node7-card-assets.zip`; it is not loaded by RedM and can be extracted separately for editing. Checkout, quantity controls, exports, and `node7-inventory/html/images` resolution remain part of the runtime UI.
+
+
+## RedM-safe payment selection
+
+Cash, bank, and any custom payment methods render as large clickable cards with an active indicator, account description, and available balance. The UI never uses a native HTML dropdown for payment selection. When a checkout payload does not provide payment methods, NODE7 UI supplies Cash and Bank cards automatically; scripts can override balances with `cashBalance`, `bankBalance`, or `money = { cash = ..., bank = ... }`.
+
+Long payment lists, checkout summaries, commerce controls, and modal fields use the custom brass scrollbar only when needed.

@@ -115,9 +115,9 @@ local function commerceDashboardScreen()
             description = 'Direct quantity input, presets, payment selection, checkboxes, delivery toggle, and optional notes.',
             fields = {
                 { id = 'quantity', label = 'Quantity', type = 'quantity', min = 1, max = 99, value = 1, presets = { 1, 5, 10, 25 }, required = true },
-                { id = 'payment', label = 'Payment Account', type = 'select', value = 'cash', options = {
-                    { value = 'cash', label = 'Cash' },
-                    { value = 'bank', label = 'Bank' }
+                { id = 'payment', label = 'Payment Account', type = 'choice', value = 'cash', options = {
+                    { value = 'cash', label = 'Cash', description = 'Pay from carried cash' },
+                    { value = 'bank', label = 'Bank', description = 'Charge the connected bank account' }
                 } },
                 { id = 'options', label = 'Order Options', type = 'checkboxes', options = {
                     { value = 'inspect', label = 'Inspect before purchase' },
