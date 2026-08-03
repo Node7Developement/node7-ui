@@ -1,23 +1,16 @@
 [README.md](https://github.com/user-attachments/files/30679872/README.md)
 # NODE7 UI
 
-
-
-
-
-
-
-
-
-
-
-
-
 <img width="1914" height="1080" alt="fullUI" src="https://github.com/user-attachments/assets/1ae31253-7029-4794-82c7-8dd01fc2dbca" />
 
+
+<img width="1920" height="1080" alt="n7optimizedui" src="https://github.com/user-attachments/assets/1d390376-4a61-4d26-81f7-f9c8c4730fe1" />
+
+
+[README.md](https://github.com/user-attachments/files/30680276/README.md)
 Full-screen animated ESO × Red Dead FULLY OPTIMIZED  scene shell for NODE7 RedM resources.
 
-`node7-ui` supplies reusable UI structure only. It does not own inventory, money, banking, shops, crafting, housing, jobs, gangs, medical data, records, or framework state. Resources can connect their own data later through the existing generic NODE7 UI API.
+`node7-ui` supplies reusable UI structure only. It does not own inventory, money, banking, shops, crafting, housing, jobs, gangs, medical data, records, or framework state. Resources can connect![Uploading n7optimizedui.PNG…]() their own data later through the existing generic NODE7 UI API.
 
 ## Version 1.4.1
 
