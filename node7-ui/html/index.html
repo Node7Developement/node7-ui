@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NODE7 UI</title>
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div id="n7ui-root" class="n7ui-root" hidden>
+    <div class="n7ui-backdrop" aria-hidden="true"></div>
+    <div class="n7ui-atmosphere" aria-hidden="true">
+      <div class="n7ui-smoke n7ui-smoke-one"></div>
+      <div class="n7ui-smoke n7ui-smoke-two"></div>
+      <div id="n7ui-particles" class="n7ui-particles"></div>
+    </div>
+
+    <div class="n7ui-shell" data-theme="commerce">
+      <div class="n7ui-trace n7ui-trace-top" aria-hidden="true"></div>
+      <div class="n7ui-trace n7ui-trace-bottom" aria-hidden="true"></div>
+
+      <header class="n7ui-header">
+        <div class="n7ui-status" id="n7ui-status-left">NODE7 Framework<strong>Universal UI Shell</strong></div>
+        <div class="n7ui-brand">
+          <img class="n7ui-brand-logo" src="images/node7-logo.png" alt="NODE7 Development Studios" />
+          <div class="n7ui-brand-copy">
+            <small id="n7ui-subtitle">ESO × Red Dead interface system</small>
+            <h1 id="n7ui-title">NODE7 Dominion</h1>
+          </div>
+        </div>
+        <div class="n7ui-status n7ui-status-right" id="n7ui-status-right">Preview State<strong>Scene Navigation</strong></div>
+      </header>
+
+      <div class="n7ui-workspace">
+        <aside class="n7ui-navigation-scene" aria-label="Scene navigation">
+          <div class="n7ui-compass-wrap">
+            <div id="n7ui-compass" class="n7ui-compass" aria-label="Module compass">
+              <div class="n7ui-compass-ring"></div>
+              <div class="n7ui-compass-cross"></div>
+              <div class="n7ui-compass-core">
+                <span id="n7ui-compass-icon">CO</span>
+                <strong id="n7ui-compass-label">Commerce</strong>
+                <small id="n7ui-compass-count">01 / 13</small>
+              </div>
+              <div id="n7ui-module-orbit" class="n7ui-module-orbit"></div>
+            </div>
+            <div class="n7ui-compass-hints"><span><b>Q</b> Previous realm</span><span><b>E</b> Next realm</span></div>
+          </div>
+
+          <section class="n7ui-chapter-scene">
+            <div class="n7ui-section-label"><span>Chapter Scenes</span><small>← / →</small></div>
+            <div id="n7ui-screen-scenes" class="n7ui-screen-scenes"></div>
+          </section>
+        </aside>
+
+        <main class="n7ui-main-scene">
+          <div class="n7ui-scene-heading">
+            <div>
+              <span id="n7ui-scene-kicker" class="n7ui-scene-kicker">Commerce · Scene I</span>
+              <h2 id="n7ui-screen-title">Vendor Catalogue</h2>
+              <p id="n7ui-screen-description">Universal cards, stock, imagery, pricing, and inspection structure.</p>
+            </div>
+            <div class="n7ui-scene-status">
+              <span id="n7ui-view-label">Grid Scene</span>
+              <strong id="n7ui-page-label">Page 01 / 01</strong>
+            </div>
+          </div>
+
+          <div class="n7ui-category-scene">
+            <button id="n7ui-category-prev" class="n7ui-arrow-button" type="button" aria-label="Previous category">‹</button>
+            <div id="n7ui-category-constellation" class="n7ui-category-constellation" aria-label="Scene categories"></div>
+            <button id="n7ui-category-next" class="n7ui-arrow-button" type="button" aria-label="Next category">›</button>
+          </div>
+
+          <section id="n7ui-content-host" class="n7ui-content-host" aria-live="polite"></section>
+
+          <div class="n7ui-pagination-scene">
+            <button id="n7ui-page-prev" class="n7ui-page-arrow" type="button" aria-label="Previous page"><span>←</span><small>Previous</small></button>
+            <div id="n7ui-page-pips" class="n7ui-page-pips" aria-label="Pages"></div>
+            <button id="n7ui-page-next" class="n7ui-page-arrow" type="button" aria-label="Next page"><small>Next</small><span>→</span></button>
+          </div>
+        </main>
+
+        <aside class="n7ui-inspection-scene">
+          <div class="n7ui-inspection-ornament" aria-hidden="true"></div>
+          <div class="n7ui-inspector-inner">
+            <span id="n7ui-inspector-badge" class="n7ui-badge">Structure</span>
+            <h2 id="n7ui-inspector-name">NODE7 Interface</h2>
+            <div id="n7ui-inspector-type" class="n7ui-inspector-type">Universal Scene Region</div>
+            <div id="n7ui-large-preview" class="n7ui-large-preview" aria-hidden="true"><span>N7</span></div>
+            <p id="n7ui-inspector-description" class="n7ui-inspector-description">Large inspection space for future script-provided items, characters, horses, properties, recipes, records, and services.</p>
+            <div id="n7ui-inspector-stats" class="n7ui-inspector-stats"></div>
+            <div id="n7ui-inspector-actions" class="n7ui-inspector-actions"></div>
+          </div>
+        </aside>
+      </div>
+
+      <footer class="n7ui-footer">
+        <div id="n7ui-controls" class="n7ui-controls">
+          <span><strong>Q / E</strong> Realm</span>
+          <span><strong>← / →</strong> Scene</span>
+          <span><strong>↑ / ↓</strong> Select</span>
+          <span><strong>ENTER</strong> Action</span>
+          <span><strong>ESC</strong> Close</span>
+        </div>
+        <div id="n7ui-message" class="n7ui-message">NODE7 scene shell ready.</div>
+      </footer>
+    </div>
+
+    <div id="n7ui-toast-stack" class="n7ui-toast-stack" aria-live="polite"></div>
+
+    <div id="n7ui-modal-layer" class="n7ui-modal-layer" hidden>
+      <div class="n7ui-modal" role="dialog" aria-modal="true" aria-labelledby="n7ui-modal-title">
+        <span id="n7ui-modal-badge" class="n7ui-badge">Preview</span>
+        <h3 id="n7ui-modal-title">NODE7 Modal</h3>
+        <p id="n7ui-modal-message">Reusable confirmation and quantity structure.</p>
+        <div id="n7ui-modal-fields" class="n7ui-modal-fields"></div>
+        <div id="n7ui-modal-actions" class="n7ui-modal-actions"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

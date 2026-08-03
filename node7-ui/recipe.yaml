@@ -1,0 +1,28 @@
+$engine: 3
+$onesync: on
+name: NODE7 UI
+author: NODE7 Development Studios
+version: 1.3.0
+description: Animated full-screen ESO and Red Dead scene shell with local WAV feedback and standalone notifications.
+
+tasks:
+  - action: download_github
+    src: https://github.com/Node7Developement/node7-ui
+    ref: main
+    dest: ./resources/[node7-ui]/node7-ui
+
+  - action: write_file
+    file: ./node7-ui.cfg
+    data: |
+      # NODE7 UI permissions must load before the resource.
+      exec @node7-ui/permissions.cfg
+      ensure node7-ui
+
+
+  - action: write_file
+    file: ./server.cfg
+    append: true
+    data: |
+
+      # NODE7 Universal UI
+      exec node7-ui.cfg
