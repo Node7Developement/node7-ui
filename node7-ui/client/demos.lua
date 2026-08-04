@@ -263,26 +263,166 @@ local function formScreen(id, label, description)
 end
 
 local function componentScreen(id, label, description)
-    return {
+    local screen = {
         id = id,
         label = label,
         title = label,
         description = description,
         view = 'components',
         categories = {
-            { id = 'overlays', label = 'Overlays' },
-            { id = 'feedback', label = 'Feedback' },
-            { id = 'states', label = 'States' }
+            { id = 'all', label = 'All' },
+            { id = 'modals', label = 'Modals' },
+            { id = 'forms', label = 'Forms & Typing' },
+            { id = 'feedback', label = 'Feedback' }
         },
         components = {
-            { id = 'modal', label = 'Confirmation Modal', description = 'Confirmation, warning, purchase, crafting, trade, or property overlay.', action = 'modal' },
-            { id = 'toast', label = 'Toast Notification', description = 'Success, information, warning, or error notification.', action = 'toast' },
-            { id = 'progress', label = 'Progress Structure', description = 'Timed, loading, crafting, queue, or activity progress.', action = 'toast' },
-            { id = 'quantity', label = 'Quantity Selector', description = 'Purchase, transfer, split, crafting, or deposit amount control.', action = 'modal' },
-            { id = 'empty', label = 'Empty State', description = 'Empty, unavailable, disabled, locked, or missing-content presentation.', action = 'toast' },
-            { id = 'loading', label = 'Loading State', description = 'Skeleton and pending-content presentation.', action = 'toast' }
+            {
+                id = 'confirmation_modal',
+                label = 'Confirmation Modal',
+                category = 'modals',
+                badge = 'Modal',
+                description = 'Reusable confirm or cancel overlay for any connected resource.',
+                action = 'modal',
+                modal = {
+                    badge = 'Confirmation',
+                    title = 'Confirm Action',
+                    message = 'Review the requested action before continuing.',
+                    actions = {
+                        { id = 'cancel', label = 'Cancel', validate = false },
+                        { id = 'confirm', label = 'Confirm', style = 'primary' }
+                    }
+                }
+            },
+            {
+                id = 'warning_modal',
+                label = 'Warning Modal',
+                category = 'modals',
+                badge = 'Warning',
+                description = 'Restricted, destructive, or irreversible action warning.',
+                action = 'modal',
+                modal = {
+                    badge = 'Warning',
+                    title = 'Restricted Action',
+                    message = 'This action may have permanent consequences.',
+                    actions = {
+                        { id = 'cancel', label = 'Go Back', validate = false },
+                        { id = 'continue', label = 'Continue', style = 'primary' }
+                    }
+                }
+            },
+            {
+                id = 'quantity_prompt',
+                label = 'Quantity Prompt',
+                category = 'modals',
+                badge = 'Prompt',
+                description = 'Typed or stepped amount selection for transfers, purchases, and crafting.',
+                action = 'modal',
+                modal = {
+                    badge = 'Quantity',
+                    title = 'Select Amount',
+                    message = 'Choose an exact amount before continuing.',
+                    fields = {
+                        { id = 'quantity', label = 'Quantity', type = 'quantity', min = 1, max = 100, value = 1, presets = { 1, 5, 10, 25 }, required = true }
+                    },
+                    actions = {
+                        { id = 'cancel', label = 'Cancel', validate = false },
+                        { id = 'confirm', label = 'Confirm', style = 'primary' }
+                    }
+                }
+            },
+            {
+                id = 'text_input_prompt',
+                label = 'Text Input Prompt',
+                category = 'forms',
+                badge = 'Typing',
+                description = 'Reusable single-line typed prompt with validation and a character counter.',
+                action = 'modal',
+                modal = {
+                    badge = 'Input',
+                    title = 'Enter a Value',
+                    message = 'Type directly inside the NODE7 interface.',
+                    fields = {
+                        { id = 'value', label = 'Text Value', type = 'text', placeholder = 'Type a value', minLength = 2, maxLength = 64, autofocus = true, required = true }
+                    },
+                    actions = {
+                        { id = 'cancel', label = 'Cancel', validate = false },
+                        { id = 'submit', label = 'Submit', style = 'primary' }
+                    }
+                }
+            },
+            {
+                id = 'structured_form_modal',
+                label = 'Structured Form Modal',
+                category = 'forms',
+                badge = 'Form',
+                description = 'Reusable title, category, and multiline details form for future scripts.',
+                action = 'modal',
+                modal = {
+                    badge = 'Form',
+                    title = 'Structured Form',
+                    message = 'Generic form support only. Connected resources provide their own labels and data.',
+                    size = 'wide',
+                    fields = {
+                        { id = 'title', label = 'Title', type = 'text', placeholder = 'Enter a title', minLength = 3, maxLength = 80, autofocus = true, required = true },
+                        { id = 'category', label = 'Category', type = 'choice', value = 'general', required = true, options = {
+                            { value = 'general', label = 'General' },
+                            { value = 'priority', label = 'Priority' },
+                            { value = 'restricted', label = 'Restricted' }
+                        } },
+                        { id = 'details', label = 'Details', type = 'textarea', placeholder = 'Enter detailed information', rows = 5, minLength = 10, maxLength = 500, required = true }
+                    },
+                    actions = {
+                        { id = 'cancel', label = 'Cancel', validate = false },
+                        { id = 'submit', label = 'Submit', style = 'primary' }
+                    }
+                }
+            },
+            {
+                id = 'toast_notification',
+                label = 'Toast Notification',
+                category = 'feedback',
+                badge = 'Feedback',
+                description = 'Success, information, warning, or error notification.',
+                action = 'toast',
+                toast = {
+                    type = 'success',
+                    title = 'NODE7 Success',
+                    message = 'Reusable notification structure.',
+                    duration = 3200
+                }
+            },
+            {
+                id = 'progress_feedback',
+                label = 'Progress Feedback',
+                category = 'feedback',
+                badge = 'Progress',
+                description = 'Timed progress feedback with a visible completion bar.',
+                action = 'toast',
+                toast = {
+                    type = 'info',
+                    title = 'NODE7 Progress',
+                    message = 'Processing the requested action…',
+                    duration = 5000
+                }
+            },
+            {
+                id = 'loading_overlay',
+                label = 'Loading Overlay',
+                category = 'feedback',
+                badge = 'State',
+                description = 'Pending, loading, unavailable, and waiting-state feedback.',
+                action = 'toast',
+                toast = {
+                    type = 'info',
+                    title = 'Loading',
+                    message = 'Waiting for the connected resource.',
+                    duration = 3800
+                }
+            }
         }
     }
+
+    return screen
 end
 
 local function dualScreen(id, label, description)
@@ -447,7 +587,7 @@ local function universalPayload(startModule)
                 id = 'components',
                 label = 'Components',
                 screens = {
-                    componentScreen('overlays', 'Modals & Overlays', 'Shared confirmation, warning, quantity, notification, and progress structures.'),
+                    componentScreen('overlays', 'Modals & Overlays', 'Shared confirmation, warning, quantity, notification, progress, form, and typing structures.'),
                     formScreen('forms', 'Forms & Inputs', 'Text, number, selection, category, validation, review, and submission structures.'),
                     componentScreen('states', 'Loading & Empty States', 'Loading, disabled, locked, unavailable, error, success, and empty states.'),
                     componentScreen('feedback', 'Feedback Components', 'Toast, status, tooltip, progress, badge, alert, and action feedback structures.')

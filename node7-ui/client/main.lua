@@ -152,6 +152,77 @@ local function PlaySound(name, options)
     return true
 end
 
+local function OpenForm(data)
+    if type(data) ~= 'table' then
+        return false, 'invalid_form'
+    end
+
+    local source = copyTable(data)
+    local formId = source.formId or source.id or ('node7-form-%s'):format(GetGameTimer())
+    local fields = type(source.fields) == 'table' and source.fields or {}
+    local actions = type(source.actions) == 'table' and source.actions or {
+        { id = 'cancel', label = 'Cancel', validate = false },
+        { id = 'submit', label = source.submitLabel or 'Submit', style = 'primary' }
+    }
+
+    local payloadId, openError = Open({
+        id = source.payloadId or formId,
+        title = source.shellTitle or 'NODE7 Components',
+        subtitle = source.shellSubtitle or 'Reusable modal and form interface',
+        cursor = source.cursor == nil and true or source.cursor == true,
+        statusLeft = source.statusLeft or { label = 'NODE7 Framework', value = 'Shared UI Components' },
+        statusRight = source.statusRight or { label = 'Form State', value = 'Typing Enabled' },
+        startModule = 'components',
+        startScreen = 'modals_overlays',
+        modules = {
+            {
+                id = 'components',
+                label = 'Components',
+                screens = {
+                    {
+                        id = 'modals_overlays',
+                        label = 'Modals & Overlays',
+                        title = 'Modals & Overlays',
+                        description = 'Shared confirmation, warning, quantity, notification, progress, form, and typing structures.',
+                        view = 'components',
+                        categories = {
+                            { id = 'all', label = 'All' },
+                            { id = 'modals', label = 'Modals' },
+                            { id = 'forms', label = 'Forms & Typing' },
+                            { id = 'feedback', label = 'Feedback' }
+                        },
+                        components = type(source.components) == 'table' and source.components or {
+                            { id = 'form_prompt', label = 'Form Prompt', category = 'forms', badge = 'Typing', description = 'Reusable typed form supplied by the connected resource.' },
+                            { id = 'confirmation', label = 'Confirmation', category = 'modals', badge = 'Modal', description = 'Reusable confirm and cancel structure.' },
+                            { id = 'feedback', label = 'Action Feedback', category = 'feedback', badge = 'Feedback', description = 'Reusable notification and progress structure.' }
+                        }
+                    }
+                }
+            }
+        }
+    })
+
+    if not payloadId then
+        return false, openError
+    end
+
+    ShowModal({
+        id = formId,
+        formId = formId,
+        submit = true,
+        badge = source.badge or 'Form',
+        title = source.title or 'NODE7 Form',
+        message = source.message or source.description or 'Complete the fields below.',
+        size = source.size or (#fields >= 3 and 'wide' or nil),
+        fields = fields,
+        summary = source.summary,
+        actions = actions,
+        entry = source.entry
+    })
+
+    return payloadId
+end
+
 local function IsOpen()
     return isOpen
 end
@@ -230,6 +301,7 @@ exports('Close', Close)
 exports('Update', Update)
 exports('ShowToast', ShowToast)
 exports('ShowModal', ShowModal)
+exports('OpenForm', OpenForm)
 exports('PlaySound', PlaySound)
 exports('IsOpen', IsOpen)
 exports('OpenCheckout', OpenCheckout)
@@ -257,6 +329,10 @@ end)
 
 RegisterNetEvent('node7-ui:client:modal', function(data)
     ShowModal(data)
+end)
+
+RegisterNetEvent('node7-ui:client:form', function(data)
+    OpenForm(data)
 end)
 
 RegisterNetEvent('node7-ui:client:playSound', function(name, options)

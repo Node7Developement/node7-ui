@@ -55,7 +55,7 @@
     checkout: 1,
     commerce: 1,
     table: 5,
-    components: 6,
+    components: 8,
     dialogue: 4,
     form: 4,
     dual: 6,
@@ -511,11 +511,19 @@
 
   function entriesForScreen(screen = currentScreen()) {
     const raw = rawEntriesForScreen(screen);
-    if (text(screen.view, '').toLowerCase() === 'tree') {
+    const view = text(screen.view, '').toLowerCase();
+    if (view === 'tree') {
       const category = text(currentCategory()?.id, '').toLowerCase();
       if (!category || category === 'all') return raw;
       const columnMatches = raw.filter(entry => text(entry.treeColumn, '').toLowerCase().includes(category));
       return columnMatches.length ? columnMatches : raw.filter(categoryMatches);
+    }
+    if (view === 'form') return raw;
+    if (view === 'components') {
+      const category = text(currentCategory()?.id, 'all').toLowerCase();
+      if (!category || category === 'all' || category === 'overview') return raw;
+      const hasComponentCategories = raw.some(entry => text(entry.category || entry.group || entry.section, '').trim() !== '');
+      return hasComponentCategories ? raw.filter(categoryMatches) : raw;
     }
     return raw.filter(categoryMatches);
   }
@@ -1300,12 +1308,33 @@
     }));
   }
 
+  function appendCharacterCounter(wrapper, control, minimum, maximum) {
+    const min = Number.isFinite(Number(minimum)) ? Math.max(0, Number(minimum)) : 0;
+    const max = Number.isFinite(Number(maximum)) ? Math.max(min, Number(maximum)) : 0;
+    if (!min && !max) return;
+    const counter = document.createElement('small');
+    counter.className = 'n7ui-field-counter';
+    const update = () => {
+      const length = String(control.value || '').length;
+      counter.textContent = max ? `${length} / ${max}` : `${length} character${length === 1 ? '' : 's'}`;
+      counter.classList.toggle('is-short', min > 0 && length > 0 && length < min);
+      counter.classList.toggle('is-limit', max > 0 && length >= max);
+    };
+    control.addEventListener('input', update);
+    wrapper.appendChild(counter);
+    update();
+  }
+
   function createFormControl(field) {
     const source = asObject(field);
     const wrapper = document.createElement('div');
     wrapper.className = 'n7ui-form-field';
     wrapper.dataset.fieldId = fieldIdentifier(source);
     wrapper.dataset.required = source.required === true ? 'true' : 'false';
+    wrapper.dataset.minLength = Number.isFinite(Number(source.minLength)) ? String(Math.max(0, Number(source.minLength))) : '';
+    wrapper.dataset.maxLength = Number.isFinite(Number(source.maxLength)) ? String(Math.max(0, Number(source.maxLength))) : '';
+    wrapper.dataset.minimum = Number.isFinite(Number(source.min)) ? String(Number(source.min)) : '';
+    wrapper.dataset.maximum = Number.isFinite(Number(source.max)) ? String(Number(source.max)) : '';
 
     const label = document.createElement('label');
     label.textContent = text(source.label, 'Field');
@@ -1456,12 +1485,16 @@
       emitFieldChange(wrapper, wrapper._n7GetValue());
     } else if (type === 'textarea') {
       const textarea = document.createElement('textarea');
-      textarea.rows = Number(source.rows) || 3;
-      textarea.maxLength = Number(source.maxLength) || 1000;
+      textarea.rows = clamp(Number(source.rows) || 4, 2, 10);
+      const maximum = Number.isFinite(Number(source.maxLength)) ? Math.max(1, Number(source.maxLength)) : 1000;
+      textarea.maxLength = maximum;
+      if (Number.isFinite(Number(source.minLength))) textarea.minLength = Math.max(0, Number(source.minLength));
       textarea.placeholder = text(source.placeholder, 'Enter details');
       textarea.value = text(source.value, '');
+      if (source.autofocus === true) textarea.autofocus = true;
       textarea.addEventListener('input', () => emitFieldChange(wrapper, textarea.value));
       wrapper.appendChild(textarea);
+      appendCharacterCounter(wrapper, textarea, source.minLength, maximum);
       setReader(() => textarea.value.trim());
       emitFieldChange(wrapper, textarea.value.trim());
     } else if (type === 'range') {
@@ -1490,9 +1523,12 @@
       if (Number.isFinite(Number(source.min))) input.min = String(source.min);
       if (Number.isFinite(Number(source.max))) input.max = String(source.max);
       if (Number.isFinite(Number(source.step))) input.step = String(source.step);
-      if (Number.isFinite(Number(source.maxLength))) input.maxLength = Number(source.maxLength);
+      if (Number.isFinite(Number(source.minLength))) input.minLength = Math.max(0, Number(source.minLength));
+      if (Number.isFinite(Number(source.maxLength))) input.maxLength = Math.max(1, Number(source.maxLength));
+      if (source.autofocus === true) input.autofocus = true;
       input.addEventListener('input', () => emitFieldChange(wrapper, input.type === 'number' ? Number(input.value) : input.value));
       wrapper.appendChild(input);
+      if (input.type !== 'number') appendCharacterCounter(wrapper, input, source.minLength, source.maxLength);
       setReader(() => input.type === 'number' ? Number(input.value) : input.value.trim());
       emitFieldChange(wrapper, wrapper._n7GetValue());
     }
@@ -1524,13 +1560,26 @@
       const value = typeof field._n7GetValue === 'function' ? field._n7GetValue() : field.dataset.value;
       const required = field.dataset.required === 'true';
       const empty = Array.isArray(value) ? value.length === 0 : value === '' || value === null || value === undefined || value === false || (typeof value === 'number' && !Number.isFinite(value));
+      const minLength = Number(field.dataset.minLength || 0);
+      const maxLength = Number(field.dataset.maxLength || 0);
+      const minimum = field.dataset.minimum === '' ? null : Number(field.dataset.minimum);
+      const maximum = field.dataset.maximum === '' ? null : Number(field.dataset.maximum);
+      const stringValue = typeof value === 'string' ? value : '';
+      let message = '';
+
+      if (required && empty) message = 'This field is required.';
+      else if (!empty && minLength > 0 && stringValue.length < minLength) message = `Enter at least ${minLength} characters.`;
+      else if (!empty && maxLength > 0 && stringValue.length > maxLength) message = `Use no more than ${maxLength} characters.`;
+      else if (!empty && typeof value === 'number' && minimum !== null && value < minimum) message = `Minimum value is ${minimum}.`;
+      else if (!empty && typeof value === 'number' && maximum !== null && value > maximum) message = `Maximum value is ${maximum}.`;
+
       const error = field.querySelector('.n7ui-field-error');
-      field.classList.toggle('is-invalid', required && empty);
+      field.classList.toggle('is-invalid', message !== '');
       if (error) {
-        error.hidden = !(required && empty);
-        error.textContent = required && empty ? 'This field is required.' : '';
+        error.hidden = message === '';
+        error.textContent = message;
       }
-      if (required && empty) valid = false;
+      if (message) valid = false;
     });
     return valid;
   }
@@ -1570,12 +1619,18 @@
       button.type = 'button';
       button.className = 'n7ui-component-card';
       button.setAttribute('aria-selected', index === state.selectedIndex ? 'true' : 'false');
-      button.innerHTML = `<h3>${text(entry.label, 'Component')}</h3><p>${text(entry.description, 'Reusable NODE7 component structure.')}</p>`;
+      button.innerHTML = `<span class="n7ui-component-kind">${text(entry.badge || entry.kind, 'Component')}</span><h3>${text(entry.label, 'Component')}</h3><p>${text(entry.description, 'Reusable NODE7 component structure.')}</p>`;
       button.addEventListener('click', () => {
         state.selectedIndex = index;
         renderContent();
-        if (entry.action === 'modal') showModal({ badge: 'Component', title: entry.label, message: entry.description });
-        if (entry.action === 'toast') showToast({ title: entry.label, message: entry.description, duration: 2600 });
+        const action = text(entry.action, '').toLowerCase();
+        if (action === 'modal' || Object.keys(asObject(entry.modal)).length) {
+          showModal({ badge: text(entry.badge, 'Component'), title: entry.label, message: entry.description, ...asObject(entry.modal) });
+        } else if (action === 'toast' || Object.keys(asObject(entry.toast)).length) {
+          showToast({ title: entry.label, message: entry.description, duration: 2600, ...asObject(entry.toast) });
+        } else {
+          dispatchAction('component', { actionId: text(entry.id, 'component'), actionLabel: entry.label, entry });
+        }
       });
       grid.appendChild(button);
     });
@@ -1807,6 +1862,7 @@
     elements.modalBadge.textContent = text(source.badge, 'Preview');
     elements.modalTitle.textContent = text(source.title, 'NODE7 Modal');
     elements.modalMessage.textContent = text(source.message, 'Reusable modal structure.');
+    modalLayer.querySelector('.n7ui-modal')?.classList.toggle('is-wide', source.size === 'wide' || asArray(source.fields).length >= 4);
     elements.modalFields.replaceChildren();
     elements.modalActions.replaceChildren();
 
@@ -1829,19 +1885,36 @@
           playSound('error', { force: true });
           return;
         }
+        const fields = collectFormValues(elements.modalFields);
         dispatchAction('modal', {
           modalId: text(source.id, ''),
           actionId: action.id,
           actionLabel: action.label,
-          fields: collectFormValues(elements.modalFields),
+          fields,
           entry: source.entry || null
         });
+        if (action.id !== 'cancel' && (source.submit === true || text(source.formId, '') !== '')) {
+          nuiPost('node7ui_submit', {
+            payloadId: text(state.payload?.id, ''),
+            moduleId: currentModule().id,
+            screenId: currentScreen().id,
+            formId: text(source.formId, source.id || currentScreen().id),
+            actionId: action.id,
+            fields
+          });
+        }
         closeModal(false);
       });
       elements.modalActions.appendChild(button);
     });
     modalLayer.hidden = false;
+    window.setTimeout(() => {
+      const preferred = elements.modalFields.querySelector('[autofocus]');
+      const first = preferred || elements.modalFields.querySelector('input:not([type="hidden"]), textarea, button');
+      if (first && typeof first.focus === 'function') first.focus();
+    }, 0);
   }
+
 
   function createParticles() {
     const host = document.getElementById('n7ui-particles');
@@ -1868,9 +1941,13 @@
     if (root.hidden) return;
 
     if (state.modalOpen) {
-      if (event.key === 'Escape' || event.key === 'Backspace') {
+      if (event.key === 'Escape') {
         event.preventDefault();
         closeModal();
+      } else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        const primary = elements.modalActions.querySelector('.is-primary') || elements.modalActions.querySelector('button:last-child');
+        if (primary) primary.click();
       }
       return;
     }
@@ -2037,6 +2114,24 @@
         actions: [{ id: 'return_catalogue', label: 'Back to Catalogue' }, { id: 'purchase_selected', label: 'Complete Checkout', style: 'primary' }]
       }
     });
+    const componentOverlayScreen = () => ({
+      id: 'overlays',
+      label: 'Modals & Overlays',
+      title: 'Modals & Overlays',
+      description: 'Shared confirmation, warning, quantity, notification, progress, form, and typing structures.',
+      view: 'components',
+      categories: [{ id: 'all', label: 'All' }, { id: 'modals', label: 'Modals' }, { id: 'forms', label: 'Forms & Typing' }, { id: 'feedback', label: 'Feedback' }],
+      components: [
+        { id: 'confirm', label: 'Confirmation Modal', category: 'modals', badge: 'Modal', description: 'Reusable confirm or cancel overlay.', action: 'modal', modal: { actions: [{ id: 'cancel', label: 'Cancel', validate: false }, { id: 'confirm', label: 'Confirm', style: 'primary' }] } },
+        { id: 'warning', label: 'Warning Modal', category: 'modals', badge: 'Warning', description: 'Restricted or destructive action warning.', action: 'modal', modal: { badge: 'Warning', actions: [{ id: 'cancel', label: 'Go Back', validate: false }, { id: 'continue', label: 'Continue', style: 'primary' }] } },
+        { id: 'quantity', label: 'Quantity Prompt', category: 'modals', badge: 'Prompt', description: 'Typed or stepped quantity input.', action: 'modal', modal: { fields: [{ id: 'quantity', label: 'Quantity', type: 'quantity', min: 1, max: 100, value: 1, presets: [1, 5, 10, 25], required: true }] } },
+        { id: 'text_prompt', label: 'Text Input Prompt', category: 'forms', badge: 'Typing', description: 'Single-line reusable typed prompt.', action: 'modal', modal: { fields: [{ id: 'value', label: 'Text Value', type: 'text', placeholder: 'Type directly inside the UI', minLength: 2, maxLength: 64, autofocus: true, required: true }] } },
+        { id: 'form_modal', label: 'Structured Form Modal', category: 'forms', badge: 'Form', description: 'Reusable title, category, and multiline details form.', action: 'modal', modal: { size: 'wide', fields: [{ id: 'title', label: 'Title', type: 'text', placeholder: 'Enter a title', minLength: 3, maxLength: 80, autofocus: true, required: true }, { id: 'category', label: 'Category', type: 'choice', value: 'general', options: [{ value: 'general', label: 'General' }, { value: 'priority', label: 'Priority' }, { value: 'restricted', label: 'Restricted' }], required: true }, { id: 'details', label: 'Details', type: 'textarea', placeholder: 'Enter detailed information', rows: 5, minLength: 10, maxLength: 500, required: true }], actions: [{ id: 'cancel', label: 'Cancel', validate: false }, { id: 'submit', label: 'Submit', style: 'primary' }] } },
+        { id: 'toast', label: 'Toast Notification', category: 'feedback', badge: 'Feedback', description: 'Success, information, warning, or error notification.', action: 'toast', toast: { type: 'success', title: 'NODE7 Success', message: 'Reusable notification structure.', duration: 3200 } },
+        { id: 'progress', label: 'Progress Feedback', category: 'feedback', badge: 'Progress', description: 'Timed progress feedback with a visible completion bar.', action: 'toast', toast: { type: 'info', title: 'NODE7 Progress', message: 'Processing the requested action…', duration: 5000 } },
+        { id: 'loading', label: 'Loading Overlay', category: 'feedback', badge: 'State', description: 'Pending, loading, and unavailable state feedback.', action: 'toast', toast: { type: 'info', title: 'Loading', message: 'Waiting for the connected resource.', duration: 3800 } }
+      ]
+    });
     const module = (id, label) => ({ id, label, screens: [gridScreen(`${id}_one`, `${label} Overview`), gridScreen(`${id}_two`, `${label} Catalogue`), gridScreen(`${id}_three`, `${label} Activity`, 'list'), gridScreen(`${id}_four`, `${label} Records`, 'grid')] });
     return {
       id: 'browser-preview',
@@ -2051,7 +2146,7 @@
         module('world', 'World'), module('organizations', 'Organizations'), module('services', 'Services'),
         module('social', 'Social'), module('travel', 'Travel'), module('activities', 'Activities'),
         module('medical', 'Medical'), module('records', 'Records'), module('administration', 'Administration'),
-        module('components', 'Components')
+        { id: 'components', label: 'Components', screens: [componentOverlayScreen(), gridScreen('forms', 'Forms & Inputs', 'list'), gridScreen('states', 'Loading & Empty States'), gridScreen('feedback', 'Feedback Components')] }
       ]
     };
   }

@@ -120,6 +120,7 @@ exports['node7-ui']:Update(payload)
 exports['node7-ui']:Close('resource_request')
 exports['node7-ui']:ShowToast(data)
 exports['node7-ui']:ShowModal(data)
+exports['node7-ui']:OpenForm(data)
 exports['node7-ui']:PlaySound('confirm', { volume = 1.0 })
 exports['node7-ui']:IsOpen()
 ```
@@ -132,8 +133,34 @@ TriggerEvent('node7-ui:client:update', payload)
 TriggerEvent('node7-ui:client:close', 'reason')
 TriggerEvent('node7-ui:client:toast', data)
 TriggerEvent('node7-ui:client:modal', data)
+TriggerEvent('node7-ui:client:form', data)
 TriggerEvent('node7-ui:client:playSound', 'confirm', { volume = 1.0 })
 ```
+
+## Reusable form and typing prompts
+
+Forms are generic NODE7 UI components. They do not contain report, MDT, banking, inventory, or other script-specific logic.
+
+```lua
+exports['node7-ui']:OpenForm({
+    id = 'example_form',
+    title = 'Structured Form',
+    message = 'Complete the fields below.',
+    size = 'wide',
+    fields = {
+        { id = 'title', label = 'Title', type = 'text', minLength = 3, maxLength = 80, required = true, autofocus = true },
+        { id = 'category', label = 'Category', type = 'choice', value = 'general', options = {
+            { value = 'general', label = 'General' },
+            { value = 'priority', label = 'Priority' }
+        } },
+        { id = 'details', label = 'Details', type = 'textarea', rows = 5, minLength = 10, maxLength = 500, required = true }
+    }
+})
+```
+
+Supported typed controls include `text`, `textarea`, `number`, `quantity`, `choice`, `select`, `checkbox`, `checkboxes`, `toggle`, `range`, `email`, `tel`, `date`, `time`, `password`, `url`, and `search`.
+
+Form submissions are returned through `node7-ui:client:submit`. Modal action clicks are also returned through `node7-ui:client:action`.
 
 All UI actions are routed through:
 
@@ -153,6 +180,7 @@ end)
 exports['node7-ui']:OpenFor(source, payload)
 exports['node7-ui']:CloseFor(source, 'server_request')
 exports['node7-ui']:ToastFor(source, data)
+exports['node7-ui']:OpenFormFor(source, data)
 exports['node7-ui']:PlaySoundFor(source, 'success', { volume = 1.0 })
 ```
 

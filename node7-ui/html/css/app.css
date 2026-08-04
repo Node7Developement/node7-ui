@@ -2674,3 +2674,58 @@ button {
     animation: none !important;
   }
 }
+
+/* NODE7 Components · Scene 01: reusable modal/form prompt support */
+.n7ui-component-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.n7ui-component-kind {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--n7ui-brass);
+  font-family: Arial, sans-serif;
+  font-size: .49rem;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+
+.n7ui-modal.is-wide {
+  width: min(720px, 94vw);
+}
+
+.n7ui-modal.is-wide .n7ui-modal-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.n7ui-modal.is-wide .n7ui-form-field[data-field-type='textarea'],
+.n7ui-modal.is-wide .n7ui-form-field[data-field-type='checkboxes'],
+.n7ui-modal.is-wide .n7ui-form-field[data-field-type='select'] {
+  grid-column: 1 / -1;
+}
+
+.n7ui-field-counter {
+  display: block;
+  margin-top: 5px;
+  color: var(--n7ui-muted);
+  font-family: Arial, sans-serif;
+  font-size: .5rem;
+  text-align: right;
+}
+
+.n7ui-field-counter.is-short {
+  color: #c9a65d;
+}
+
+.n7ui-field-counter.is-limit {
+  color: #e08076;
+}
+
+@media (max-width: 1280px) {
+  .n7ui-component-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+}

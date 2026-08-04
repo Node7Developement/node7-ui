@@ -5,7 +5,7 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 
 author 'NODE7 Development Studios'
 description 'Full-screen animated ESO and Red Dead inspired scene-based NUI shell for NODE7 RedM resources.'
-version '1.4.3'
+version '1.5.0'
 
 lua54 'yes'
 

@@ -171,3 +171,13 @@ exports('PlaySoundFor', function(source, name, options)
     TriggerClientEvent('node7-ui:client:playSound', source, name, type(options) == 'table' and options or {})
     return true
 end)
+
+
+exports('OpenFormFor', function(source, data)
+    if type(source) ~= 'number' or source <= 0 or type(data) ~= 'table' then
+        return false
+    end
+
+    TriggerClientEvent('node7-ui:client:form', source, data)
+    return true
+end)
